@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>🎰 KINNERS SLOT MACHINE 🎰</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 15%, #394a80, #090c17 70%);
+  font-family: Arial, sans-serif;
+  color: white;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow-x: hidden;
+}
+
+.machine {
+  width: 92%;
+  max-width: 680px;
+  padding: 30px;
+
+  text-align: center;
+
+  background:
+    linear-gradient(145deg, #293453, #101525);
+
+  border: 5px solid #ffd447;
+  border-radius: 32px;
+
+  box-shadow:
+    0 0 30px #000,
+    0 0 60px rgba(255, 212, 71, 0.3);
+}
+
+h1 {
+  margin: 0 0 8px;
+
+  font-size: clamp(30px, 8vw, 55px);
+
+  color: #ffd447;
+
+  text-shadow:
+    0 4px 0 #8c6200,
+    0 0 20px rgba(255,212,71,.5);
+}
+
+.subtitle {
+  opacity: .8;
+  margin-bottom: 25px;
+  font-size: 18px;
+}
+
+.slots {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.reel {
+  width: 31%;
+  height: 150px;
+
+  background:
+    linear-gradient(#ffffff, #dddddd);
+
+  border: 6px solid #e5b72e;
+  border-radius: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow:
+    inset 0 0 20px #777,
+    0 8px 15px #000;
+
+  overflow: hidden;
+}
+
+.symbol {
+  font-size: clamp(48px, 13vw, 78px);
+}
+
+.spin-button {
+  margin-top: 30px;
+
+  padding: 18px 55px;
+
+  border: none;
+  border-radius: 18px;
+
+  background:
+    linear-gradient(#ffe979, #f0ad18);
+
+  color: #241800;
+
+  font-size: 26px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 0 #956100,
+    0 0 20px rgba(255,212,71,.3);
+
+  transition: .1s;
+}
+
+.spin-button:active {
+  transform: translateY(6px);
+
+  box-shadow:
+    0 1px 0 #956100;
+}
+
+.spin-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.result {
+  margin-top: 28px;
+
+  padding: 18px;
+
+  min-height: 65px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 15px;
+
+  background: #080b14;
+
+  font-size: 21px;
+  font-weight: bold;
+
+  transition: .3s;
+}
+
+.winner {
+  color: #ffd447;
+
+  box-shadow:
+    0 0 30px #ffd447,
+    inset 0 0 20px rgba(255,212,71,.15);
+
+  animation:
+    winner .5s infinite alternate;
+}
+
+@keyframes winner {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.04);
+  }
+}
+
+.spinning {
+  animation: shake .08s infinite;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateY(-9px);
+  }
+
+  50% {
+    transform: translateY(9px);
+  }
+
+  100% {
+    transform: translateY(-9px);
+  }
+}
+
+.confetti {
+  position: fixed;
+
+  width: 10px;
+  height: 16px;
+
+  top: -20px;
+
+  z-index: 999;
+
+  animation:
+    fall 2s linear forwards;
+}
+
+@keyframes fall {
+  to {
+    transform:
+      translateY(110vh)
+      rotate(720deg);
+
+    opacity: 0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="machine">
+
+  <h1>🎰 KINNERS SLOT MACHINE 🎰</h1>
+
+  <div class="subtitle">
+    Dreh die Walzen und hol dir einen Hauptpreis!
+  </div>
+
+  <div class="slots">
+
+    <div class="reel" id="reel1">
+      <span class="symbol">❔</span>
+    </div>
+
+    <div class="reel" id="reel2">
+      <span class="symbol">❔</span>
+    </div>
+
+    <div class="reel" id="reel3">
+      <span class="symbol">❔</span>
+    </div>
+
+  </div>
+
+  <button
+    class="spin-button"
+    id="spinButton">
+    SPIN! 🎰
+  </button>
+
+  <div
+    class="result"
+    id="result">
+    Bereit?
+  </div>
+
+</div>
+
+<script>
+
+/* =========================
+   NORMALE SYMBOLE
+========================= */
+
+const normalSymbols = [
+  "🍒",
+  "🍋",
+  "🔔",
+  "⭐",
+  "🍉",
+  "7️⃣",
+  "🥤",
+  "🎲"
+];
+
+
+/* =========================
+   HAUPTPREISE
+   JEWEILS 5 %
+========================= */
+
+const prizes = [
+
+  {
+    emoji: "🇬🇷",
+    name: "Aggelos"
+  },
+
+  {
+    emoji: "🪖",
+    name: "Kampfmaschine (Aaron)"
+  },
+
+  {
+    emoji: "🍗",
+    name: "Hühner Fred (Dünnschiss)"
+  },
+
+  {
+    emoji: "💯",
+    name: "Beschde"
+  }
+
+];
+
+
+/* =========================
+   ELEMENTE
+========================= */
+
+const button =
+  document.getElementById("spinButton");
+
+const result =
+  document.getElementById("result");
+
+const reels = [
+
+  document.getElementById("reel1"),
+
+  document.getElementById("reel2"),
+
+  document.getElementById("reel3")
+
+];
+
+
+/* =========================
+   ZUFALLSSYMBOL
+========================= */
+
+function randomNormal() {
+
+  return normalSymbols[
+    Math.floor(
+      Math.random() *
+      normalSymbols.length
+    )
+  ];
+
+}
+
+
+/* =========================
+   KONFETTI
+========================= */
+
+function confetti() {
+
+  for (let i = 0; i < 80; i++) {
+
+    const piece =
+      document.createElement("div");
+
+    piece.className = "confetti";
+
+    piece.style.left =
+      Math.random() * 100 + "vw";
+
+    piece.style.background =
+      "hsl(" +
+      Math.random() * 360 +
+      ", 90%, 60%)";
+
+    piece.style.animationDelay =
+      Math.random() * 0.5 + "s";
+
+    document.body.appendChild(piece);
+
+    setTimeout(() => {
+      piece.remove();
+    }, 2500);
+
+  }
+
+}
+
+
+/* =========================
+   SPIN
+========================= */
+
+function spin() {
+
+  if (button.disabled) {
+    return;
+  }
+
+  button.disabled = true;
+
+  result.className = "result";
+
+  result.textContent =
+    "🎰 DREHT...";
+
+
+  reels.forEach(reel => {
+
+    reel.classList.add("spinning");
+
+  });
+
+
+  /*
+    HAUPTPREISE:
+
+    Aggelos          = 5 %
+    Kampfmaschine    = 5 %
+    Hühner Fred      = 5 %
+    Beschde          = 5 %
+
+    Zusammen         = 20 %
+
+    Kein Hauptpreis  = 80 %
+  */
+
+  const random =
+    Math.random();
+
+  let prize = null;
+
+
+  if (random < 0.20) {
+
+    const index =
+      Math.floor(random / 0.05);
+
+    prize =
+      prizes[index];
+
+  }
+
+
+  /* =========================
+     ENDERGEBNIS
+  ========================= */
+
+  let finalSymbols;
+
+
+  if (prize) {
+
+    finalSymbols = [
+
+      prize.emoji,
+      prize.emoji,
+      prize.emoji
+
+    ];
+
+  } else {
+
+    finalSymbols = [
+
+      randomNormal(),
+      randomNormal(),
+      randomNormal()
+
+    ];
+
+  }
+
+
+  /* =========================
+     WALZEN ANIMATION
+  ========================= */
+
+  let counter = 0;
+
+
+  const animation =
+    setInterval(() => {
+
+      reels.forEach(reel => {
+
+        reel.querySelector(
+          ".symbol"
+        ).textContent =
+          randomNormal();
+
+      });
+
+
+      counter++;
+
+
+      if (counter >= 25) {
+
+        clearInterval(animation);
+
+
+        /* Endgültige Symbole */
+
+        reels[0]
+          .querySelector(".symbol")
+          .textContent =
+          finalSymbols[0];
+
+        reels[1]
+          .querySelector(".symbol")
+          .textContent =
+          finalSymbols[1];
+
+        reels[2]
+          .querySelector(".symbol")
+          .textContent =
+          finalSymbols[2];
+
+
+        reels.forEach(reel => {
+
+          reel.classList.remove(
+            "spinning"
+          );
+
+        });
+
+
+        /* =========================
+           GEWINN
+        ========================= */
+
+        if (prize) {
+
+          result.className =
+            "result winner";
+
+          result.textContent =
+            "🎉 HAUPTPREIS: " +
+            prize.name +
+            "! 🎉";
+
+          confetti();
+
+
+        } else {
+
+
+          /* =========================
+             VERLOREN
+          ========================= */
+
+          result.className =
+            "result";
+
+          result.textContent =
+            "KINNERS GAMBLED WEITER";
+
+        }
+
+
+        button.disabled = false;
+
+      }
+
+    }, 100);
+
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+
+button.addEventListener(
+  "click",
+  spin
+);
+
+</script>
+
+</body>
+</html>
